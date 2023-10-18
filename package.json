@@ -1,0 +1,17 @@
+{
+  "name": "deepltranslate",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/resx": "^2.0.1",
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "^0.31.17",
+    "get-cursor-position": "^2.0.0",
+    "resx": "^2.0.4"
+  }
+}
