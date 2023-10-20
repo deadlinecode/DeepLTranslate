@@ -3,6 +3,7 @@ import { TypeCompiler } from "@sinclair/typebox/compiler";
 import fs from "fs";
 import path from "path";
 import { SourceLanguageCodes, TargetLanguageCodes } from "./DeepL/Types";
+import Utils from "./Utils";
 
 const configSchema = Type.Object({
     apiKey: Type.String(),
@@ -15,6 +16,7 @@ const configSchema = Type.Object({
     nameRewrite: Type.Optional(Type.String()),
     out: Type.Optional(Type.String()),
     forceTranslation: Type.Optional(Type.Any()),
+    formatJSON: Type.Optional(Type.Boolean()),
   }),
   validator = TypeCompiler.Compile(configSchema),
   quit = (txt: string) => {
@@ -40,14 +42,7 @@ if (err.length) {
   quit("Please correct your config.json");
 }
 
-if (parsed.forceTranslation) {
-  console.log(
-    Object.entries(parsed.forceTranslation).every(
-      ([k, v]) =>
-        TargetLanguageCodes.includes(k as any) &&
-        (v === "*" || Array.isArray(v))
-    )
-  );
+if (parsed.forceTranslation)
   if (
     !(
       parsed.forceTranslation === "*" ||
@@ -61,7 +56,9 @@ if (parsed.forceTranslation) {
     )
   )
     quit("Invalid forceTranslation config");
-}
+
+if (!Utils.path.isAbsolute(parsed.file))
+  parsed.file = path.join(path.dirname(configFile), parsed.file);
 
 if (!fs.existsSync(parsed.file) || fs.lstatSync(parsed.file).isDirectory())
   quit("File not found");
@@ -80,7 +77,7 @@ parsed.target_langs = parsed.target_langs.map((x) => x.toUpperCase() as any);
 export default {
   ...parsed,
   out: parsed.out
-    ? parsed.out.startsWith("/")
+    ? Utils.path.isAbsolute(parsed.out)
       ? parsed.out
       : path.join(
           process.argv.slice(2)[0]

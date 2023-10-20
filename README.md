@@ -27,6 +27,16 @@ bun run src/index.ts path/to/config.json
 
 Be aware that if you do so the script will also take the configs path as the root path for calculating the config paths.
 
+### Dev mode
+
+To run the script in dev or watch mode run `bun run src/index.ts --watch` or `npx ts-node src/index.ts --watch`
+<br/>
+<br/>
+This will run the script in watch mode which means that it will rerun the script every time you change something in your source language file.
+<br/>
+<br/>
+If you want to also specify a config file the command would look like this `bun run src/index.ts path/to/config.json --watch` or `npx ts-node src/index.ts path/to/config.json --watch`
+
 ### Config
 
 #### Examples
@@ -90,6 +100,7 @@ More infos:
 | file | Yes | The path to the file to translate<br/>This should be either a JSON file with key value string pairs or a ResX File |
 | source_lang | Yes | The case<b>in</b>sensitive 2 letter language code of the file to translate |
 | target_langs | Yes | An array of case<b>in</b>sensitive 2 letter language codes to translate the file to |
+| formatJSON | No | Use this to format the translated JSON files<br/>If not supplied the translated JSON files will be minified |
 | nameRewrite | No | A string that will be used to rewrite the name of the translated files<br/>The string can contain the following placeholders:<br/>`{{lang}}` - The lowercase language code of the translated file<br/>`{{LANG}}` - The uppercase language code of the translated file<br/>If not supplied the translated files will have the same name as the source file with the uppercase language code between the file name and the file ending |
 | out | No | The path to the directory where the translated files and hash file should be saved<br/>If not supplied the translated files will be saved in the same directory as the config file |
 | forceTranslation | No | Use this to force translation for specific target languages<br/><br/>You can force translation of all target languages like this<br/>`"forceTranslation": "*"`<br/><br/>You can force translation of a specific language like this<br/>`"forceTranslation": { "EN": "*" }`<br/><br/>You can force translation of a specific language and one or more specific keys like this<br/>`"forceTranslation": { "EN": ["key1", "key2"] }`

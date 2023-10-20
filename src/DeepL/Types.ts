@@ -1,4 +1,9 @@
-export interface Rsp {
+export interface UsageRsp {
+  character_count: number;
+  character_limit: number;
+}
+
+export interface TranslateRsp {
   translations: Translation[];
 }
 
