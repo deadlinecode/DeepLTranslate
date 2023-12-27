@@ -1,8 +1,10 @@
 import { TranslateRsp, UsageRsp } from "./Types";
 
 export default class DeepL {
-  private readonly baseURL = "https://api-free.deepl.com/v2";
-  constructor(private apiKey: string) {}
+  private readonly baseURL;
+  constructor(private apiKey: string, pro = false) {
+    this.baseURL = `https://api${!pro ? "-free" : ""}.deepl.com/v2`;
+  }
 
   private req = <T extends any>(
     url: `/${string}`,

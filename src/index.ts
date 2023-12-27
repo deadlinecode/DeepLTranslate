@@ -20,32 +20,34 @@ const watch = process.argv.includes("--watch"),
       rawParsed = isJSON ? JSON.parse(file) : await resx.resx2js(file);
     var parsed: Record<string, string> = rawParsed;
 
-    if (await fsp.exists(path.join(Config.out, "deepl.hash")))
-      try {
-        console.log("Checking hashes...");
-        const hashes = JSON.parse(
-          await fsp.readFile(path.join(Config.out, "deepl.hash"), "utf8")
-        );
-        var hashSkip = 0;
-        parsed = Object.fromEntries(
-          Object.entries(parsed).filter(([k, v]) => {
-            if (Utils.hash(v as any) !== hashes[k]) return true;
-            hashSkip++;
-            return false;
-          })
-        );
-        if (!Object.keys(parsed).length) {
-          if (Config.forceTranslation) return;
-          console.log("Nothing to translate after filtering hashes!");
-          if (watch) return "EXIT";
-          process.exit(0);
-        }
-        console.log(
-          `Skipping ${hashSkip} and translating ${
-            Object.keys(parsed).length
-          } thanks to hashes...`
-        );
-      } catch {}
+    await (async () => {
+      if (await fsp.exists(path.join(Config.out, "deepl.hash")))
+        try {
+          console.log("Checking hashes...");
+          const hashes = JSON.parse(
+            await fsp.readFile(path.join(Config.out, "deepl.hash"), "utf8")
+          );
+          var hashSkip = 0;
+          parsed = Object.fromEntries(
+            Object.entries(parsed).filter(([k, v]) => {
+              if (Utils.hash(v as any) !== hashes[k]) return true;
+              hashSkip++;
+              return false;
+            })
+          );
+          if (!Object.keys(parsed).length) {
+            if (Config.forceTranslation) return;
+            console.log("Nothing to translate after filtering hashes!");
+            if (watch) return "EXIT";
+            process.exit(0);
+          }
+          console.log(
+            `Skipping ${hashSkip} and translating ${
+              Object.keys(parsed).length
+            } thanks to hashes...`
+          );
+        } catch {}
+    })();
 
     var langKeyMap = Object.fromEntries(
       Config.target_langs.map((x) => [x, parsed])
@@ -89,7 +91,7 @@ const watch = process.argv.includes("--watch"),
     }
 
     Utils.header("DeepL Infos");
-    const deepl = new DeepL(Config.apiKey),
+    const deepl = new DeepL(Config.apiKey, Config.pro),
       timeLang: Record<string, number> = {},
       usage = await deepl.usage(),
       charCount = Object.values(langKeyMap).reduce(
@@ -126,7 +128,7 @@ const watch = process.argv.includes("--watch"),
       console.log(`\x1b[2m${x}\t-\tLoading...\x1b[0m`)
     );
 
-    var y = 31;
+    var y = 29;
     process.stdout.cursorTo(0, y);
     process.stdout.clearLine(0);
 
@@ -159,9 +161,13 @@ const watch = process.argv.includes("--watch"),
             var existingData: Record<string, string> = {};
             if (await fsp.exists(filename)) {
               const rawExistingData = await fsp.readFile(filename, "utf8");
-              existingData = isJSON
-                ? JSON.parse(rawExistingData)
-                : await resx.resx2js(rawExistingData);
+              existingData = Object.fromEntries(
+                Object.entries(
+                  isJSON
+                    ? JSON.parse(rawExistingData)
+                    : await resx.resx2js(rawExistingData)
+                ).filter(([k]) => rawParsed[k])
+              ) as any;
               const existingKeys = Object.keys(existingData);
               Object.keys(rawParsed).forEach(
                 (k) => !existingKeys.includes(k) && sentences.push(k)
@@ -182,13 +188,15 @@ const watch = process.argv.includes("--watch"),
                     tag_handling: "html",
                   })
                   .then((x) =>
-                    x.translations[0].text.replace(
-                      new RegExp(`{(.+?(?=}))`, "gm"),
-                      (wB, i) => {
-                        const _i = parseInt(i);
-                        if (isNaN(_i)) return wB;
-                        return "{" + placeholderArr[_i];
-                      }
+                    Utils.htmlDecode(
+                      x.translations[0].text.replace(
+                        new RegExp(`{(.+?(?=}))`, "gm"),
+                        (wB, i) => {
+                          const _i = parseInt(i);
+                          if (isNaN(_i)) return wB;
+                          return "{" + placeholderArr[_i];
+                        }
+                      )
                     )
                   )
               );
@@ -210,7 +218,8 @@ const watch = process.argv.includes("--watch"),
       )
     );
 
-    console.log("\n\n\n");
+    process.stdout.cursorTo(0, y);
+    console.log("\n\n");
     if (Config.out) {
       console.log("Saving hashes...");
       await fsp.writeFile(

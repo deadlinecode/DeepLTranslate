@@ -7,6 +7,7 @@ import Utils from "./Utils";
 
 const configSchema = Type.Object({
     apiKey: Type.String(),
+    pro: Type.Optional(Type.Boolean()),
     file: Type.String(),
     source_lang: Type.Union(SourceLanguageCodes.map((x) => Type.Literal(x))),
     target_langs: Type.Array(
